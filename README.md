@@ -9,9 +9,11 @@ Prerequisites
 - The latest version of ArrayFire. You can [download here](http://www.accelereyes.com/download_arrayfire)
     - All the pre-requisites for ArrayFire still apply.
 
-- `gfortran`: Rigt now only `gfortran` for Linux is supported
+- `gfortran`
 
 - `make`
+
+- `Linux` Right now other distributions are not supported
 
 Contents
 ---------------
@@ -30,7 +32,7 @@ Usage
 
 After you the necessary pre-requisites, edit the following paramets
 
-- Open common.mk and change AF_PATH to the right location
+- Open common.mk and change `AF_PATH` to the right location
 
 
 ### Linux
