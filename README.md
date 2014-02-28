@@ -13,7 +13,7 @@ Prerequisites
 
 - `make`
 
-- `Linux` Right now other distributions are not supported
+- `Linux` Right now other operating systems are not supported
 
 Contents
 ---------------
