@@ -18,13 +18,13 @@ Prerequisites
 Contents
 ---------------
 
-- src/: Contains the source files for the ArrayFire Fortran wrapper
-    - fortran_wrapper.cpp: The C++ part of the wrapper
-    - arrayfire.f95: The fortran part of the wrapper
+- `src/`: Contains the source files for the ArrayFire Fortran wrapper
+    - `fortran_wrapper.cpp` The C++ part of the wrapper
+    - `arrayfire.f95` The fortran part of the wrapper
 
-- lib/, lib64/: The location where the wrapper library is stored
+- `lib/`, `lib64/`: The location where the wrapper library is stored
 
-- examples: contains a few examples demonstrating the usage
+- `examples`: contains a few examples demonstrating the usage
 
 
 Usage
@@ -32,7 +32,7 @@ Usage
 
 After you the necessary pre-requisites, edit the following paramets
 
-- Open common.mk and change `AF_PATH` to the right location
+- Open `common.mk` and change `AF_PATH` to the right location
 
 
 ### Linux
