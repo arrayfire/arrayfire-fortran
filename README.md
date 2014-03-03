@@ -1,7 +1,7 @@
 arrayfire_fortran
 =================
 
-This repository contains the files required to use ArrayFire from Fortran^.
+This repository contains the files required to use ArrayFire from Fortran.
 
 Prerequisites
 ---------------
