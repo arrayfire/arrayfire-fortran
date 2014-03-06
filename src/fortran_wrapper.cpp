@@ -162,8 +162,6 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
       array tmp = *(array *)*ptr;                                       \
       dim4 d = tmp.dims();                                              \
       int bytes = tmp.elements() * sizeof(ty);                          \
-      if (*dim != tmp.numdims())                                        \
-        throw af::exception("Transferring to host - Dimension mismatch\n"); \
       tmp.host((void *)a);                                              \
     } catch (af::exception& ex) {                                       \
       *err = 5;                                                         \
