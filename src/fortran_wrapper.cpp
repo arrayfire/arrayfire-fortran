@@ -708,17 +708,36 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
             exit(-1);
         }
     }
-    void af_arr_get_(void **out, void **in, void **d0, void **d1, int *d2, int *d3, int *err)
+
+    void af_arr_get_(void **out, void **in,
+                     void **d0, void **d1, int *d2, int *d3, int *dims,
+                     int *err)
     {
         try {
             *out = (void *)new array();
             array *R = (array *)*out;
             array A = *(array *)*in;
+
             array idx0 = (*(array *)*d0) - 1;
-            array idx1 = seq(A.dims(1));
-            if (d1 != NULL && *d1 != NULL) idx1 = (*(array *)*d1) - 1;
-            int idx2 = (*d2 - 1) + (*d3 - 1) * (A.dims(0) * A.dims(1) * A.dims(2));
-            *R = A(idx0, idx1, idx2);
+            array idx1 = array(A.dims(1));
+            seq idx2 = span;
+            int idx3 = 0;
+
+            if (*dims >= 2) idx1 = (*(array *)*d1) - 1;
+            if (*dims >= 3) idx2 = seq(d2[0], d2[2], d2[1]);
+            if (*dims >= 4) idx3 = d3[0];
+
+            if (*dims == 3) {
+                *R = A(idx0, idx1, idx2);
+            } else {
+                if (d2[0] != d2[1]) {
+                    printf("When using 4d indexing, last two dimensions should be integers\n");
+                    exit(-1);
+                }
+                int lastdim = idx3 * A.dims(2) + d2[0];
+                *R = A(idx0, idx1, lastdim);
+            }
+
             vec_add(*out, *in);
         } catch (af::exception& ex) {
             *err = 12;
@@ -727,16 +746,136 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
         }
     }
 
-    void af_arr_set_(void **out, void **in, void **d0, void **d1, int *d2, int *d3, int *err)
+    void af_arr_get2_(void **out, void **in,
+                      void **d0, int *d1, int *d2, int *dims,
+                      int *err)
+    {
+        try {
+            *out = (void *)new array();
+            array *R = (array *)*out;
+            array A = *(array *)*in;
+
+            array idx0 = (*(array *)*d0) - 1;
+            seq idx1 = span;
+            seq idx2 = span;
+
+            if (*dims >= 2) idx1 = seq(d1[0], d1[2], d1[1]);
+            if (*dims >= 3) idx2 = seq(d2[0], d2[2], d2[1]);
+
+            *R = A(idx0, idx1, idx2);
+            vec_add(*out, *in);
+
+        } catch (af::exception& ex) {
+            *err = 12;
+            printf("%s\n", ex.what());
+            exit(-1);
+        }
+    }
+
+    void af_arr_get_seq_(void **out, void **in,
+                         int *d0, int *d1, int *d2, int *d3,
+                         int *dim, int *err)
+    {
+        try {
+            *out = (void *)new array();
+            array *R = (array *)*out;
+            array A = *(array *)*in;
+
+            seq s0 = seq(d0[0], d0[2], d0[1]);
+            seq s1 = span;
+            seq s2 = span;
+            seq s3 = span;
+
+            if (*dim >= 2) s1 = seq(d1[0], d1[2], d1[1]);
+            if (*dim >= 3) s2 = seq(d2[0], d2[2], d2[1]);
+            if (*dim >= 4) s3 = seq(d3[0], d3[2], d3[1]);
+
+            *R = A(s0, s1, s2, s3);
+
+            vec_add(*out, *in);
+        } catch (af::exception& ex) {
+            *err = 12;
+            printf("%s\n", ex.what());
+            exit(-1);
+        }
+    }
+
+    void af_arr_set_(void **out, void **in,
+                     void **d0, void **d1, int *d2, int *d3, int *dims,
+                     int *err)
     {
         try {
             array *R = (array *)*out;
             array A = *(array *)*in;
+
             array idx0 = (*(array *)*d0) - 1;
-            array idx1 = seq(R->dims(1));
-            if (d1 != NULL && *d1 != NULL) idx1 = (*(array *)*d1) - 1;
-            int idx2 = (*d2 - 1) + (*d3 - 1) * (R->dims(0) * R->dims(1) * R->dims(2));
+            array idx1 = array(A.dims(1));
+            seq idx2 = span;
+            int idx3 = 0;
+
+            if (*dims >= 2) idx1 = (*(array *)*d1) - 1;
+            if (*dims >= 3) idx2 = seq(d2[0], d2[2], d2[1]);
+            if (*dims >= 4) idx3 = d3[0];
+
+            if (*dims == 3) {
+                (*R)(idx0, idx1, idx2) = A;
+            } else {
+                if (d2[0] != d2[1]) {
+                    printf("When using 4d indexing, last two dimensions should be integers\n");
+                    exit(-1);
+                }
+                int lastdim = idx3 * R->dims(2) + d2[0];
+                (*R)(idx0, idx1, lastdim) = A;
+            }
+
+        } catch (af::exception& ex) {
+            *err = 12;
+            printf("%s\n", ex.what());
+            exit(-1);
+        }
+    }
+
+    void af_arr_set2_(void **out, void **in,
+                     void **d0, int *d1, int *d2, int *dims,
+                     int *err)
+    {
+        try {
+            array *R = (array *)*out;
+            array A = *(array *)*in;
+
+            array idx0 = (*(array *)*d0) - 1;
+            seq idx1 = span;
+            seq idx2 = span;
+
+            if (*dims >= 2) idx1 = seq(d1[0], d1[2], d1[1]);
+            if (*dims >= 3) idx2 = seq(d2[0], d2[2], d2[1]);
+
             (*R)(idx0, idx1, idx2) = A;
+        } catch (af::exception& ex) {
+            *err = 12;
+            printf("%s\n", ex.what());
+            exit(-1);
+        }
+    }
+
+    void af_arr_set_seq_(void **out, void **in,
+                         int *d0, int *d1, int *d2, int *d3,
+                         int *dim, int *err)
+    {
+        try {
+            array *R = (array *)*out;
+            array A = *(array *)*in;
+
+            seq s0 = seq(d0[0], d0[2], d0[1]);
+            seq s1 = span;
+            seq s2 = span;
+            seq s3 = span;
+
+            if (*dim >= 2) s1 = seq(d1[0], d1[2], d1[1]);
+            if (*dim >= 3) s2 = seq(d2[0], d2[2], d2[1]);
+            if (*dim >= 4) s3 = seq(d3[0], d3[2], d3[1]);
+
+            (*R)(s0, s1, s2, s3) = A;
         } catch (af::exception& ex) {
             *err = 12;
             printf("%s\n", ex.what());

@@ -154,7 +154,7 @@ module arrayfire
   !> @param[in] d4 integer denoting the index of the 4th dimension. Optional.
   !> @returns subarry of in referenced by d1,d2,d3,d4
   interface get
-     module procedure array_get
+     module procedure array_get, array_get2, array_get_seq
   end interface get
   !> @}
 
@@ -166,7 +166,7 @@ module arrayfire
   !> @param[in] d3 integer denoting the index of the 3rd dimension. Optional.
   !> @param[in] d4 integer denoting the index of the 4th dimension. Optional.
   interface set
-     module procedure array_set
+     module procedure array_set, array_set2, array_set_seq
   end interface set
   !> @}
 
@@ -1216,6 +1216,38 @@ contains
     num = product(A%shape)
   end function elements
 
+  function safeidx(d) result(idx)
+    integer, dimension(:), intent(in) :: d
+    integer, dimension(3) :: idx
+    integer, allocatable, dimension(:) :: S
+    integer :: f
+    integer :: l
+    integer :: st
+
+    S = shape(d)
+
+    if (S(1) == 1) then
+       f = d(1)
+       l = d(1)
+       st = 1
+    end if
+
+    if (S(1) == 2) then
+       f = d(1)
+       l = d(2)
+       st = 1
+    end if
+
+    if (S(1) == 3) then
+       f = d(1)
+       l = d(2)
+       st = d(3)
+    end if
+
+    idx = (/ f-1, l-1, st /)
+
+  end function safeidx
+
   subroutine init_1d(A, S)
     type(array), intent(inout) :: A
     integer, intent(in) :: S(1)
@@ -1302,43 +1334,199 @@ contains
     type(array), intent(in) :: in
     type(array), intent(in) :: d1
     type(array), intent(in), optional :: d2
-    integer, intent(in), optional :: d3
-    integer, intent(in), optional :: d4
+    integer, dimension(:), intent(in), optional :: d3
+    integer, dimension(:), intent(in), optional :: d4
+    integer :: dims
+
     type(array) :: R
     type(C_ptr) :: idx1 = C_NULL_ptr
     type(C_ptr) :: idx2 = C_NULL_ptr
-    integer :: idx3 = 1
-    integer :: idx4 = 1
+    integer, dimension(3) :: idx3
+    integer, dimension(3) :: idx4
 
     idx1 = d1%ptr
-    if (present(d2)) idx2 = d2%ptr
-    if (present(d3)) idx3 = d3
-    if (present(d4)) idx4 = d4
+    dims = 1
 
-    call af_arr_get(R%ptr, in%ptr, idx1, idx2, idx3, idx4, err)
+    if (present(d2)) then
+       idx2 = d2%ptr
+       dims = 2
+    end if
+
+    if (present(d3)) then 
+       idx3 = safeidx(d3)
+       dims = 3
+    end if
+
+    if (present(d4)) then 
+       idx4 = safeidx(d4)
+       dims = 4
+    end if
+
+    call af_arr_get(R%ptr, in%ptr, idx1, idx2, idx3, idx4, dims, err)
     call init_post(R%ptr, R%shape, R%rank)
 
   end function array_get
+
+  function array_get2(in, d1, d2, d3) result(R)
+    type(array), intent(in) :: in
+    type(array), intent(in) :: d1
+    integer, dimension(:), intent(in) :: d2
+    integer, dimension(:), intent(in), optional :: d3
+    integer :: dims
+
+    type(array) :: R
+    type(C_ptr) :: idx1 = C_NULL_ptr
+    integer, dimension(3) :: idx2
+    integer, dimension(3) :: idx3
+
+    idx1 = d1%ptr
+    idx2 = safeidx(d2)
+    dims = 2
+
+    if (present(d3)) then 
+       idx3 = safeidx(d3)
+       dims = 3
+    end if
+
+    call af_arr_get2(R%ptr, in%ptr, idx1, idx2, idx3, dims, err)
+    call init_post(R%ptr, R%shape, R%rank)
+
+  end function array_get2
+
+  function array_get_seq(in, d1, d2, d3, d4) result(R)
+    type(array), intent(in) :: in
+    integer, intent(in) :: d1(:)
+    integer, intent(in), optional :: d2(:)
+    integer, intent(in), optional :: d3(:)
+    integer, intent(in), optional :: d4(:)
+    type(array) :: R
+
+    integer, dimension(3) :: idx1
+    integer, dimension(3) :: idx2
+    integer, dimension(3) :: idx3
+    integer, dimension(3) :: idx4
+    integer :: dims = 1
+
+    idx1 = safeidx(d1)
+    idx2 = safeidx(d1)
+    idx3 = safeidx(d1)
+    idx4 = safeidx(d1)
+
+    if (present(d2)) then
+       idx2 = safeidx(d2)
+       dims = 2
+    end if
+
+    if (present(d3)) then
+       idx3 = safeidx(d3)
+       dims = 3
+    end if
+
+    if (present(d4)) then
+       idx4 = safeidx(d4)
+       dims = 4
+    end if
+
+    call af_arr_get_seq(R%ptr, in%ptr, idx1, idx2, idx3, idx4, dims, err)
+    call init_post(R%ptr, R%shape, R%rank)
+  end function array_get_seq
 
   subroutine array_set(lhs, rhs, d1, d2, d3, d4)
     type(array), intent(in) :: lhs
     type(array), intent(inout) :: rhs
     type(array), intent(in) :: d1
     type(array), intent(in), optional :: d2
-    integer, intent(in), optional :: d3
-    integer, intent(in), optional :: d4
+    integer, dimension(:), intent(in), optional :: d3
+    integer, dimension(:), intent(in), optional :: d4
+
     type(C_ptr) :: idx1 = C_NULL_ptr
     type(C_ptr) :: idx2 = C_NULL_ptr
-    integer :: idx3 = 1
-    integer :: idx4 = 1
+    integer, dimension(3) :: idx3
+    integer, dimension(3) :: idx4
+    integer :: dims
 
     idx1 = d1%ptr
-    if (present(d2)) idx2 = d2%ptr
-    if (present(d3)) idx3 = d3
-    if (present(d4)) idx4 = d4
+    dims = 1
 
-    call af_arr_set(lhs%ptr, rhs%ptr, idx1, idx2, idx3, idx4, err)
+    if (present(d2)) then
+       idx2 = d2%ptr
+       dims = 2
+    end if
+
+    if (present(d3)) then 
+       idx3 = safeidx(d3)
+       dims = 3
+    end if
+
+    if (present(d4)) then 
+       idx4 = safeidx(d4)
+       dims = 4
+    end if
+
+    call af_arr_set(lhs%ptr, rhs%ptr, idx1, idx2, idx3, idx4, dims, err)
   end subroutine array_set
+  
+  subroutine array_set2(lhs, rhs, d1, d2, d3)
+    type(array), intent(in) :: lhs
+    type(array), intent(inout) :: rhs
+    type(array), intent(in) :: d1
+    integer, dimension(:), intent(in) :: d2
+    integer, dimension(:), intent(in), optional :: d3
+
+    type(C_ptr) :: idx1 = C_NULL_ptr
+    integer, dimension(3) :: idx2
+    integer, dimension(3) :: idx3
+    integer :: dims
+
+    idx1 = d1%ptr
+    idx2 = safeidx(d2)
+    dims = 2
+
+    if (present(d3)) then 
+       idx3 = safeidx(d3)
+       dims = 3
+    end if
+    
+    call af_arr_set2(lhs%ptr, rhs%ptr, idx1, idx2, idx3, dims, err)
+  end subroutine array_set2
+
+  subroutine array_set_seq(R, in, d1, d2, d3, d4)
+    type(array), intent(in) :: in
+    integer, intent(in) :: d1(:)
+    integer, intent(in), optional :: d2(:)
+    integer, intent(in), optional :: d3(:)
+    integer, intent(in), optional :: d4(:)
+    type(array), intent(inout) :: R
+
+    integer, dimension(3) :: idx1
+    integer, dimension(3) :: idx2
+    integer, dimension(3) :: idx3
+    integer, dimension(3) :: idx4
+    integer :: dims = 1
+
+    idx1 = safeidx(d1)
+    idx2 = safeidx(d1)
+    idx3 = safeidx(d1)
+    idx4 = safeidx(d1)
+
+    if (present(d2)) then
+       idx2 = safeidx(d2)
+       dims = 2
+    end if
+
+    if (present(d3)) then
+       idx3 = safeidx(d3)
+       dims = 3
+    end if
+
+    if (present(d4)) then
+       idx4 = safeidx(d4)
+       dims = 4
+    end if
+
+    call af_arr_set_seq(R%ptr, in%ptr, idx1, idx2, idx3, idx4, dims, err)
+    call init_post(R%ptr, R%shape, R%rank)
+  end subroutine array_set_seq
 
   !> Assigns data to array
   subroutine assign(L, R)
