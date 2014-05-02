@@ -6,7 +6,7 @@ This repository contains the files required to use ArrayFire from Fortran.
 Prerequisites
 ---------------
 
-- The latest version of ArrayFire. You can [download here](http://www.accelereyes.com/download_arrayfire)
+- The latest version of ArrayFire. You can [download here](http://www.arrayfire.com/docs/installation.htm)
     - All the pre-requisites for ArrayFire still apply.
 
 - `gfortran`
