@@ -1,15 +1,8 @@
 #include <arrayfire.h>
-#include <af/utils.h>
+#include <af/util.h>
 #include <stdio.h>
 #include <vector>
 #include <algorithm>
-
-#define OCL_NOT_SUP(fn) do {                            \
-    char errstr[1024];                                  \
-    snprintf(errstr, sizeof(errstr),                    \
-             "%s not supported for OpenCL\n", fn);      \
-    throw af::exception(errstr);                        \
-  } while(0)
 
 using namespace af;
 using namespace std;
@@ -73,9 +66,9 @@ void vec_add(void *dst, void *in1=NULL, void *in2=NULL)
 extern "C" {
 
     void af_device_info_() { af::info(); return; }
-    void af_device_get_(int *n) { *n = deviceget(); return; }
-    void af_device_set_(int *n) { deviceset(*n); return; }
-    void af_device_count_(int *n) {*n = devicecount(); return; }
+    void af_device_get_(int *n) { *n = getDevice(); return; }
+    void af_device_set_(int *n) { setDevice(*n); return; }
+    void af_device_count_(int *n) {*n = getDeviceCount(); return; }
 
     void af_device_eval_(void **arr) { af::eval(*(array *)arr); return; }
     void af_device_sync_() { af::sync(); return; }
@@ -303,7 +296,7 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
             *dst = (void *)new array();         \
             array *in = (array *)*src;          \
             array *out  = (array *)*dst;        \
-            *out = fn(*in);                     \
+            *out = af::fn(*in);                 \
             vec_add(*dst, *src);                \
         } catch (af::exception& ex) {           \
             *err = 10;                          \
@@ -350,7 +343,7 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
     }                                           \
 
     OP(sum);
-    OP(mul);
+    OP(product);
     OP(min);
     OP(max);
     OP(anytrue);
@@ -440,7 +433,7 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
             array *in1 = (array *)*re;
             array *in2 = (array *)*im;
             array *out  = (array *)*dst;
-            *out = complex(*in1, *in2);
+            *out = af::complex(*in1, *in2);
             vec_add(*dst, *re, *im);
         } catch (af::exception& ex) {
             *err = 11;
@@ -453,10 +446,7 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
     {
         try {
             array *in = (array *)*src;
-            if ((*in).type() == f32)
-                *dst = (double)norm<float>(*in);
-            else
-                *dst = (double)norm<double>(*in);
+            *dst = (double)norm(*in);
         } catch (af::exception& ex) {
             *err = 11;
             printf("%s\n", ex.what());
@@ -468,10 +458,7 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
     {
         try {
             array *in = (array *)*src;
-            if ((*in).type() == f32)
-                *dst = (double)norm<float>(*in, *p);
-            else
-                *dst = (double)norm<double>(*in, *p);
+            *dst = (double)norm(*in, AF_NORM_VECTOR_P, *p);
         } catch (af::exception& ex) {
             *err = 11;
             printf("%s\n", ex.what());
@@ -489,21 +476,6 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
             array *out  = (array *)*dst;
             *out = matmul(*left, *right);
             vec_add(*dst, *src, *tsd);
-        } catch (af::exception& ex) {
-            *err = 11;
-            printf("%s\n", ex.what());
-            exit(-1);
-        }
-    }
-
-    void af_arr_matpow_(void **dst, void **src, double *a, int *err)
-    {
-        try {
-            *dst = (void *)new array();
-            array *in = (array *)*src;
-            array *out  = (array *)*dst;
-            *out = matpow(*in , *a);
-            vec_add(*dst, *src);
         } catch (af::exception& ex) {
             *err = 11;
             printf("%s\n", ex.what());
@@ -532,28 +504,10 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
     void af_arr_lu_inplace_(void **in, int *err)
     {
         try {
-        #ifdef AFCL
-            OCL_NOT_SUP("lu_inplace");
-        #else
             array *A = (array *)*in;
             int m = A->dims(0), n = A->dims(1);
-            int *d_piv = array::alloc<int>(m);
-            switch(A->type()) {
-            case f32:
-                *err = (int) af_lu_S(d_piv, NULL, A->device<float>(), m, n, 1); break;
-            case f64:
-                *err = (int) af_lu_D(d_piv, NULL, A->device<double>(), m, n, 1); break;
-            case c32:
-                *err = (int) af_lu_C(d_piv, NULL, A->device<cfloat>(), m, n, 1); break;
-            case c64:
-                *err = (int) af_lu_Z(d_piv, NULL, A->device<cdouble>(), m, n, 1); break;
-            default:
-                *err = 11;
-                printf("Unsupported type\n");
-                return;
-            }
-            array::free(d_piv);
-       #endif
+            array pivot;
+            luInPlace(pivot, *A, true);
         }
         catch (af::exception& ex) {
             *err = 11;
@@ -586,8 +540,7 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
             *r = (void *)new array();
             unsigned info;
             array *R = (array *)*r, *A = (array *)*in;
-            *R = cholesky(info, *A, false);
-            *err = info;
+            *err = cholesky(*R, *A, false);
         }
         catch (af::exception& ex) {
             *err = 11;
@@ -600,59 +553,9 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
     void af_arr_cholesky_inplace_(void **r, int *err)
     {
         try {
-        #ifdef AFCL
-            OCL_NOT_SUP("cholesky_inplace");
-        #else
             unsigned info;
             array *R = (array *)*r;
-            unsigned n = R->dims(0);
-            switch(R->type()) {
-            case f32:
-                *err = (int)af_cholesky_S(NULL, &info, n, R->device<float>(), true, 1);
-                break;
-            case f64:
-                *err = (int)af_cholesky_D(NULL, &info, n, R->device<double>(), true, 1);
-                break;
-            case c32:
-                *err = (int)af_cholesky_C(NULL, &info, n, R->device<cfloat>(), true, 1);
-                break;
-            case c64:
-                *err = (int)af_cholesky_Z(NULL, &info, n, R->device<cdouble>(), true, 1);
-                break;
-            }
-            *err = info;
-        #endif
-        }
-        catch (af::exception& ex) {
-            *err = 11;
-            printf("%s\n", ex.what());
-            exit(-1);
-        }
-    }
-
-    void af_arr_hessenberg_(void **r, void **in, int *err)
-    {
-        try {
-            *r = (void *)new array();
-            array *R = (array *)*r, *A = (array *)*in;
-            *R = hessenberg(*A);
-        }
-        catch (af::exception& ex) {
-            *err = 11;
-            printf("%s\n", ex.what());
-            exit(-1);
-        }
-    }
-
-    void af_arr_eigen_(void **val, void **vec, void **in, int *err)
-    {
-        try {
-            *val = (void *)new array();
-
-            array *Val = (array *)*val;
-            array *Vec = (array *)*vec;
-            array *A = (array *)*in;
-            eigen(*Val, *Vec, *A);
+            *err = choleskyInPlace(*R, true);
         }
         catch (af::exception& ex) {
             *err = 11;
@@ -943,7 +846,7 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
     {
         try {
             array *tmp = (array *)*ptr;
-            _print(NULL, *tmp);
+            af::print("", *tmp);
         } catch (af::exception& ex) {
             *err = 4;
             printf("%s\n", ex.what());

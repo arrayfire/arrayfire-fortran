@@ -882,7 +882,7 @@ module arrayfire
   !> @}
 
 
-  !> @defgroup dla Factorization: lu, qr, cholesky, eigenvalues, singular values
+  !> @defgroup dla Factorization: lu, qr, cholesky, singular values
   !> @{
   !> Dense linear algebra: Factorization routines
 
@@ -944,23 +944,6 @@ module arrayfire
   interface qr
      module procedure array_qr
   end interface qr
-  !> @}
-
-  !> @{
-  !> eigen value decomposition
-  !> This function requires <a href=http://accelereyes.com/products/arrayfire_licensing>ArrayFire Pro</a>.
-  !> @param[out] values -- Contains the eigen values of input
-  !> @param[out] vectors -- Contains the eigen values of input
-  !> @param[in]  A -- Input matrix.
-  !> @code
-  !! type(array) A
-  !! type(array) values, vectors
-  !! A = randu(5,5)      ! Generate random matrix
-  !! call eigen(values, vectors, A)
-  !! @endcode
-  interface eigen
-     module procedure array_eigen
-  end interface eigen
   !> @}
 
   !> @{
@@ -1027,25 +1010,6 @@ module arrayfire
   !> @}
 
   !> @{
-  !> Power of a matrix
-  !> Negative powers require <a href=http://accelereyes.com/products/arrayfire_licensing>ArrayFire Pro</a>.
-  !> @param[out] R -- Contains the inverse values of input
-  !> @param[in]  A -- Input matrix.
-  !> @param[in]  p -- scalar exponent
-  !> @code
-  !! type(array) A
-  !! type(array) R
-  !! real p
-  !! A = randu(5,5)      ! Generate random matrix
-  !! p = 1.5
-  !! R = power(A, p)
-  !! @endcode
-  interface matpow
-     module procedure array_matpow_s, array_matpow_i, array_matpow_d
-  end interface matpow
-  !> @}
-
-  !> @{
   !> Matrix norm
   !> @param[in] A -- type array of size M x N
   !> @returns B of size N x M which is the matrix norm of A
@@ -1094,9 +1058,9 @@ module arrayfire
   !> @param[in]  A -- Input matrix
   !> @param[in]  dim -- Integer (dimension of the operation). Optional. Default: 1
   !> @returns R -- Product of input
-  interface mul
-     module procedure array_mul
-  end interface mul
+  interface product
+     module procedure array_product
+  end interface product
   !> @}
   !> @}
 
@@ -1352,12 +1316,12 @@ contains
        dims = 2
     end if
 
-    if (present(d3)) then 
+    if (present(d3)) then
        idx3 = safeidx(d3)
        dims = 3
     end if
 
-    if (present(d4)) then 
+    if (present(d4)) then
        idx4 = safeidx(d4)
        dims = 4
     end if
@@ -1383,7 +1347,7 @@ contains
     idx2 = safeidx(d2)
     dims = 2
 
-    if (present(d3)) then 
+    if (present(d3)) then
        idx3 = safeidx(d3)
        dims = 3
     end if
@@ -1453,19 +1417,19 @@ contains
        dims = 2
     end if
 
-    if (present(d3)) then 
+    if (present(d3)) then
        idx3 = safeidx(d3)
        dims = 3
     end if
 
-    if (present(d4)) then 
+    if (present(d4)) then
        idx4 = safeidx(d4)
        dims = 4
     end if
 
     call af_arr_set(lhs%ptr, rhs%ptr, idx1, idx2, idx3, idx4, dims, err)
   end subroutine array_set
-  
+
   subroutine array_set2(lhs, rhs, d1, d2, d3)
     type(array), intent(in) :: lhs
     type(array), intent(inout) :: rhs
@@ -1482,11 +1446,11 @@ contains
     idx2 = safeidx(d2)
     dims = 2
 
-    if (present(d3)) then 
+    if (present(d3)) then
        idx3 = safeidx(d3)
        dims = 3
     end if
-    
+
     call af_arr_set2(lhs%ptr, rhs%ptr, idx1, idx2, idx3, dims, err)
   end subroutine array_set2
 
@@ -2745,33 +2709,6 @@ contains
     call af_arr_matmul(R%ptr, A%ptr, B%ptr, err)
   end function array_matmul
 
-  !> Matrix power
-  function array_matpow_i(A, p) result(R)
-    type(array), intent(in) :: A
-    integer, intent(in) :: p
-    type(array) :: R
-    call init_eq(R, A)
-    call af_arr_matpow(R%ptr, A%ptr, dble(p), err)
-  end function array_matpow_i
-
-  !> Matrix power
-  function array_matpow_s(A, p) result(R)
-    type(array), intent(in) :: A
-    real, intent(in) :: p
-    type(array) :: R
-    call init_eq(R, A)
-    call af_arr_matpow(R%ptr, A%ptr, dble(p), err)
-  end function array_matpow_s
-
-  !> Matrix power
-  function array_matpow_d(A, p) result(R)
-    type(array), intent(in) :: A
-    double precision, intent(in) :: p
-    type(array) :: R
-    call init_eq(R, A)
-    call af_arr_matpow(R%ptr, A%ptr, p, err)
-  end function array_matpow_d
-
   !> Transpose an array
   function array_transpose(A) result(R)
     type(array), intent(in) :: A
@@ -2931,15 +2868,6 @@ contains
     call af_arr_qr(Q%ptr, R%ptr, A%ptr, err)
   end subroutine array_qr
 
-  !> Eigen value decomposition of array
-  subroutine array_eigen(values, vectors, A)
-    type(array), intent(in) :: A
-    type(array), intent(inout) :: values, vectors
-    call af_arr_eigen(values%ptr, vectors%ptr, A%ptr, err)
-    call init_post(values%ptr, values%shape, values%rank)
-    call init_post(vectors%ptr, vectors%shape, vectors%rank)
-  end subroutine array_eigen
-
   !> Singular value decomposition of array
   subroutine array_singular(S, U, V, A)
     type(array), intent(in) :: A
@@ -2996,7 +2924,7 @@ contains
   end function array_sum
 
   !> Product of elements in a matrix
-  function array_mul (A, d) result(R)
+  function array_product (A, d) result(R)
     type(array), intent(in) :: A
     integer, optional, intent(in) :: d
     type(array) :: R
@@ -3004,8 +2932,8 @@ contains
     if (present(d)) dim = d
     call init_eq(R, A)
     R%shape(1) = 1
-    call af_arr_mul(R%ptr, A%ptr, dim, err)
-  end function array_mul
+    call af_arr_product(R%ptr, A%ptr, dim, err)
+  end function array_product
 
   !> Minimum of elements in a matrix
   function array_min (A, d) result(R)

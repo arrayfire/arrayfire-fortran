@@ -35,9 +35,4 @@ program dla
   diff = abs(identity(N, N) - matmul(r, A))
   call print(max(moddims(diff, N * N, 1)), "absolute error: Inverting a matrix")
 
-  ! Matrix power
-  r = matpow(A, 3)
-  diff = abs(r - matmul(matmul(A, A), A))
-  call print(max(moddims(diff, N * N, 1)), "absolute error: Matrix cube")
-
 end program dla
