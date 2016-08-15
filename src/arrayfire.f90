@@ -1208,7 +1208,7 @@ contains
        st = d(3)
     end if
 
-    idx = (/ f-1, l-1, st /)
+    idx = [f-1, l-1, st]
 
   end function safeidx
 
@@ -1263,7 +1263,7 @@ contains
     integer, intent(in) :: scalar
     type(array) :: R
     integer :: S(1)
-    S = (/ 1 /)
+    S = [1]
     call init_1d(R, S)
     call af_idx_seq(R%ptr, scalar, scalar, 1, err)
   end function idx_scalar
@@ -1883,7 +1883,7 @@ contains
     integer, intent(in) :: x1
     integer, intent(in), optional :: x2, x3, x4
 
-    R%shape = (/ x1, 1, 1, 1 /)
+    R%shape = [x1, 1, 1, 1]
     R%rank = 1
     if (present(x2)) then
        R%shape(2) = x2
@@ -1905,7 +1905,7 @@ contains
   function array_flat(A) result(R)
     type(array), intent(in) :: A
     type(array) :: R
-    R%shape = (/ 1, 1, 1, 1 /)
+    R%shape = [1, 1, 1, 1]
     R%shape(1) = elements(A)
     R%rank = 1
     call af_arr_moddims(R%ptr, A%ptr, R%shape, err)
@@ -1956,7 +1956,7 @@ contains
     integer, intent(in), optional :: x2, x3, x4, ty
     integer :: tt = 1
 
-    R%shape = (/ x1, 1, 1, 1 /)
+    R%shape = [x1, 1, 1, 1]
     R%rank = 1
     if (present(x2)) then
        R%shape(2) = x2
@@ -1983,7 +1983,7 @@ contains
     integer, intent(in), optional :: x2, x3, x4, ty
     integer :: tt = 1
 
-    R%shape = (/ x1, 1, 1, 1 /)
+    R%shape = [x1, 1, 1, 1]
     R%rank = 1
     if (present(x2)) then
        R%shape(2) = x2
@@ -2011,7 +2011,7 @@ contains
     integer, intent(in), optional :: x2, x3, x4, ty
     integer :: tt = 1
 
-    R%shape = (/ x1, 1, 1, 1 /)
+    R%shape = [x1, 1, 1, 1]
     R%rank = 1
     if (present(x2)) then
        R%shape(2) = x2
@@ -2038,7 +2038,7 @@ contains
     integer, intent(in), optional :: ty
     integer :: tt = 1
 
-    R%shape = (/ x1, x2, 1, 1 /)
+    R%shape = [x1, x2, 1, 1]
     R%rank = 2
 
     if (present(ty)) tt = ty

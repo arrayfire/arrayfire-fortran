@@ -6,9 +6,9 @@ program basic
   real, dimension(:,:), allocatable :: b
   type(array) M1, M2, tmp
 
-  a(1,:) = (/ 1, 0, 0 /)
-  a(2,:) = (/ 0, 3, 0 /)
-  a(3,:) = (/ 0, 0, 2 /)
+  a(1,:) = [1, 0, 0]
+  a(2,:) = [0, 3, 0]
+  a(3,:) = [0, 0, 2]
 
   ! Copy data from host to device
   M1 = a
