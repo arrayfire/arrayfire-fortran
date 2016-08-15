@@ -19,7 +19,7 @@ Contents
 
 - `src/`: Contains the source files for the ArrayFire Fortran wrapper
     - `fortran_wrapper.cpp` The C++ part of the wrapper
-    - `arrayfire.f95` The fortran part of the wrapper
+    - `arrayfire.f90` The fortran part of the wrapper
 
 - `lib/` The location where the wrapper library is stored
 
