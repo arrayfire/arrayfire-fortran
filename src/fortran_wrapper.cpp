@@ -325,7 +325,7 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
 
 #undef OP
 
-#define OP(fn)                                  \
+#define OP_NAME(fn, afn)                        \
     void af_arr_##fn##_(void **dst, void **src, \
                         int *dim, int *err)     \
     {                                           \
@@ -333,7 +333,7 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
             *dst = (void *)new array();         \
             array *in = (array *)*src;          \
             array *out  = (array *)*dst;        \
-            *out = fn(*in, (*dim - 1));         \
+            *out = afn(*in, (*dim - 1));        \
             vec_add(*dst, *src);                \
         } catch (af::exception& ex) {           \
             *err = 10;                          \
@@ -342,13 +342,18 @@ void af_arr_constant_(void **ptr, int *val, int *x, int *fty, int *err)
         }                                       \
     }                                           \
 
+#define OP(fn) OP_NAME(fn, fn)
+
     OP(sum);
     OP(product);
     OP(min);
     OP(max);
-    OP(anytrue);
-    OP(alltrue);
 
+    OP_NAME(anytrue, anyTrue);
+    OP_NAME(alltrue, allTrue);
+
+#undef OP_NAME
+#undef OP
 
     void af_arr_moddims_(void **dst, void **src, int *x, int *err)
     {
