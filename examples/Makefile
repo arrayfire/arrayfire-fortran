@@ -14,9 +14,15 @@ BIN:=$(patsubst $(AF_FORT_EXAMPLE_DIR)/%.f90, $(AF_FORT_BIN_DIR)/%, $(SRC))
 
 all: $(BIN)
 
-$(AF_FORT_BIN_DIR)/%: $(AF_FORT_EXAMPLE_DIR)/%.f90 $(AF_FORT_MOD)
+$(AF_FORT_BIN_DIR)/.flag:
+	mkdir -p $(AF_FORT_BIN_DIR)
+	touch $@
+
+$(AF_FORT_BIN_DIR)/%: $(AF_FORT_EXAMPLE_DIR)/%.f90 $(AF_FORT_MOD) $(AF_FORT_BIN_DIR)/.flag
 	@echo Building $(shell (basename $@))
 	@gfortran -L$(AF_PATH)/$(LIB) $(CFLAGS) $(LDFLAGS) $(AF_FORT_MOD) -o $@ $<
 
 clean:
 	rm -f $(BIN)
+	rm -f $(AF_FORT_BIN_DIR)/.flag
+	rmdir $(AF_FORT_BIN_DIR)
